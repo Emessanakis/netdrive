@@ -1,0 +1,3 @@
+# This file keeps the uploads directory in git while ignoring its contents
+# The uploads directory is needed for the application to function properly
+# Actual uploaded files should not be committed to version control
