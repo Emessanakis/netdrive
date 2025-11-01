@@ -6,7 +6,7 @@ A robust Node.js backend providing secure file storage, user authentication, and
 
 NetDrive Backend is a production-ready RESTful API server deployed on DigitalOcean infrastructure that provides:
 - **User Authentication** — JWT-based auth with Google OAuth integration
-- **File Management** — Upload, download, organize, and share media files (up to 10GB per upload)
+- **File Management** — Upload, download, organize, and share media files (currently 10MB, infrastructure supports 10GB)
 - **Storage Analytics** — Real-time storage usage tracking and quotas
 - **Security** — End-to-end AES-GCM encryption, SSL/TLS, and comprehensive audit logging
 - **Media Processing** — Automatic thumbnail generation and video processing with FFmpeg
@@ -85,12 +85,12 @@ backend/
 erDiagram
     USERS {
         uuid id PK
-        string username UK
-        string email UK
+        string username
+        string email
         string name
         string password
         text icon
-        integer planId FK
+        integer planId
         bigint storage_used_bytes
         boolean is_active
         date last_login
@@ -100,7 +100,7 @@ erDiagram
     
     PLANS {
         integer id PK
-        string name UK
+        string name
         text description
         bigint storage_limit_bytes
         integer max_group_members
@@ -112,13 +112,13 @@ erDiagram
     FILES {
         uuid id PK
         string original_filename
-        string storage_filename UK
+        string storage_filename
         string iv
         string auth_tag
         string mime_type
         bigint size_bytes
-        uuid user_id FK
-        uuid folder_id FK
+        uuid user_id
+        uuid folder_id
         boolean is_deleted
         boolean is_favourite
         date deleted_at
@@ -128,8 +128,8 @@ erDiagram
     
     THUMBNAILS {
         uuid id PK
-        uuid file_id FK UK
-        string storage_filename UK
+        uuid file_id
+        string storage_filename
         string iv
         string auth_tag
         string mime_type
@@ -143,8 +143,8 @@ erDiagram
     FOLDERS {
         uuid id PK
         string name
-        uuid user_id FK
-        uuid parent_folder_id FK
+        uuid user_id
+        uuid parent_folder_id
         boolean is_deleted
         date deleted_at
         date created_at
@@ -153,17 +153,17 @@ erDiagram
     
     AUDIT_LOGS {
         integer id PK
-        enum action
+        string action
         string resource_type
         string resource_id
-        uuid user_id FK
+        uuid user_id
         text details
         date created_at
     }
     
     ROLES {
         integer id PK
-        string name UK
+        string name
         date created_at
         date updated_at
     }
@@ -171,22 +171,22 @@ erDiagram
     GROUPS {
         uuid id PK
         string name
-        uuid owner_id FK
+        uuid owner_id
         date created_at
         date updated_at
     }
     
     GROUP_MEMBERSHIPS {
         uuid id PK
-        uuid group_id FK
-        uuid user_id FK
+        uuid group_id
+        uuid user_id
         date joined_at
     }
     
     FILE_SHARES {
         uuid id PK
-        uuid file_id FK
-        uuid shared_with_user_id FK
+        uuid file_id
+        uuid shared_with_user_id
         string permission_level
         date expires_at
         date created_at
@@ -195,8 +195,8 @@ erDiagram
     
     SUBSCRIPTIONS {
         uuid id PK
-        uuid user_id FK
-        integer plan_id FK
+        uuid user_id
+        integer plan_id
         date start_date
         date end_date
         string status
@@ -223,6 +223,22 @@ erDiagram
     
     PLANS ||--o{ SUBSCRIPTIONS : "subscribed to"
 ```
+
+### Key Relationships
+
+- **Users ↔ Plans**: Each user belongs to one plan (Basic, Premium, etc.)
+- **Users ↔ Files**: Users own multiple files with encryption metadata
+- **Files ↔ Thumbnails**: One-to-one relationship for media previews
+- **Files ↔ Folders**: Files are organized in folder hierarchies
+- **Users ↔ Groups**: Users can own and belong to multiple groups
+- **Audit Logs**: Track all user actions for security and compliance
+
+### Security Features
+
+- **Encryption**: All files stored with AES-GCM (IV + Auth Tag)
+- **Unique Constraints**: Email, username, and storage filenames
+- **Audit Trail**: Complete logging of user actions
+- **Soft Deletion**: Files moved to trash before permanent removal
 
 ## Installation & Setup
 
@@ -481,12 +497,14 @@ sudo certbot renew --dry-run
 ## Known Issues / Future Improvements
 
 ### Current Limitations
+- **File Upload Size** — Currently limited to 10MB (server infrastructure configured for 10GB)
 - Single server deployment (no horizontal scaling)
 - Local file storage only (no cloud storage integration)
 - Limited video processing capabilities
 - Email templates are basic HTML
 
 ### Planned Features
+- **File Size Scaling** — Increase upload limit from 10MB to full 10GB infrastructure capacity
 - AWS S3/Google Cloud Storage integration
 - Advanced video transcoding pipeline
 - Real-time notifications with WebSocket

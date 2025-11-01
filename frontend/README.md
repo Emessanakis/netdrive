@@ -6,7 +6,7 @@ A modern file management and media gallery application built with React, TypeScr
 
 NetDrive Frontend is a production-deployed Single Page Application (SPA) that offers:
 - **Media Gallery** — Browse, view, and organize images and videos with an intuitive grid layout
-- **File Upload** — Drag & drop or click to upload with real-time progress tracking (up to 10GB files)
+- **File Upload** — Drag & drop or click to upload with real-time progress tracking (currently 10MB, scaling to 10GB)
 - **Storage Management** — Visual storage usage tracking with interactive donut charts
 - **User Authentication** — Secure login/signup with Google OAuth integration
 - **File Operations** — Favorites, trash/restore, permanent deletion, and sharing
@@ -201,11 +201,13 @@ npm run build
 ## Known Issues / Future Improvements
 
 ### Current Limitations
+- File upload currently limited to 10MB (infrastructure supports 10GB)
 - File upload limited to images and videos only
 - No offline functionality
 - Mobile upload UX could be improved
 
 ### Planned Features
+- **File Size Scaling** — Increase upload limit from 10MB to full 10GB capacity
 - Progressive Web App (PWA) support
 - Bulk file operations
 - Advanced search and filtering
