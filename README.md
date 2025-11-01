@@ -2,9 +2,9 @@
 
 <div align="center">
 
-<!-- Add your demo GIF here -->
-<!-- ![NetDrive Demo](demo.gif) -->
-*Coming Soon: Interactive Demo GIF*
+[![NetDrive Demo - Live Application Walkthrough](https://img.youtube.com/vi/jo7S_rSb3O4/maxresdefault.jpg)](https://youtu.be/jo7S_rSb3O4)
+
+*Click above to watch the full NetDrive demonstration*
 
 [![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-emessanakis.gr-blue?style=for-the-badge)](https://emessanakis.gr)
 [![Frontend](https://img.shields.io/badge/Frontend-React_+_TypeScript-61DAFB?style=for-the-badge&logo=react)](./frontend)
