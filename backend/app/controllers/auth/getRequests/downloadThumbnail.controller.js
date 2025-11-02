@@ -2,8 +2,8 @@
 
 import fs from "fs";
 import path from "path";
-import db from "../../models/index.js";
-import { decryptFileBuffer } from "../../utils/gcmEncryption.js";
+import db from "../../../models/index.js";
+import { decryptFileBuffer } from "../../../utils/gcmEncryption.js";
 
 // Import File, Folder, and Thumbnail Models
 const { file: FileModel, folder: FolderModel, thumbnail: ThumbnailModel } = db;

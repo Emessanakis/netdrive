@@ -1,5 +1,5 @@
 // backend/controllers/auth/isFavourite.controller.js
-import db from "../../models/index.js";
+import db from "../../../models/index.js";
 
 const { file: File } = db;
 

@@ -1,4 +1,4 @@
-import db from "../../models/index.js";
+import db from "../../../models/index.js";
 const { user: User } = db;
 
 const changePassword = async (req, res) => {

@@ -1,7 +1,7 @@
 // backend/controllers/auth/permanentDelete.controller.js
 import fs from "fs";
 import path from "path";
-import db from "../../models/index.js";
+import db from "../../../models/index.js";
 
 const { file: File, thumbnail: Thumbnail, folder: Folder } = db;
 const uploadBaseDir = path.join(process.cwd(), "uploads");

@@ -4,8 +4,8 @@ import { v4 as uuidv4 } from "uuid";
 import fs from "fs/promises";
 import path from "path";
 import { spawn } from "child_process";
-import encryption from "../../utils/gcmEncryption.js";
-import db from "../../models/index.js";
+import encryption from "../../../utils/gcmEncryption.js";
+import db from "../../../models/index.js";
 import sharp from "sharp";
 
 // Import File, Folder, and Thumbnail Models

@@ -50,15 +50,46 @@ NetDrive is a modern, secure cloud storage solution that combines the simplicity
 
 ```
 NetDrive/
-├── 🎨 Frontend/          # React + TypeScript SPA
-│   ├── Material-UI       # Modern component library
-│   ├── Vite             # Fast build tool
-│   └── Responsive       # Mobile-first design
-└── ⚙️ Backend/           # Node.js + Express API
-    ├── PostgreSQL       # Robust database
-    ├── JWT Auth         # Secure authentication
-    ├── AES Encryption   # File security
-    └── PM2 + Nginx      # Production deployment
+├── 📁 backend/                    # Node.js + Express API Server
+│   ├── 📱 app/
+│   │   ├── 🎛️  config/            # Database & authentication config
+│   │   ├── 🎮 controllers/        # HTTP method organized controllers
+│   │   │   ├── auth/              # Authentication & user management
+│   │   │   │   ├── getRequests/   # GET endpoints (files, storage, etc.)
+│   │   │   │   ├── postRequests/  # POST endpoints (upload, signup, etc.)
+│   │   │   │   ├── putRequests/   # PUT endpoints (restore, favorites, etc.)
+│   │   │   │   └── deleteRequests/ # DELETE endpoints (permanent delete)
+│   │   │   └── user/              # User access & role management
+│   │   ├── 🛡️  middleware/         # Authentication, validation, upload
+│   │   ├── 🗄️  models/             # Sequelize database models
+│   │   │   ├── associations.js    # Model relationships
+│   │   │   └── *.model.js         # Individual entity models
+│   │   ├── 🛣️  routes/             # Express route definitions
+│   │   ├── 📧 services/           # Email & external service integrations
+│   │   ├── 🔧 utils/              # Encryption, helpers, initialization
+│   │   └── ✅ validators/         # Input validation schemas
+│   ├── 📦 uploads/                # Encrypted file storage
+│   └── 🗃️  *.js, *.json           # Server config & dependencies
+├── 📱 frontend/                   # React + TypeScript SPA
+│   ├── 🎨 src/
+│   │   ├── 🧩 components/         # React components
+│   │   │   ├── CreateUser/        # Admin user management
+│   │   │   ├── Dashboard/         # Main app interface & content routing
+│   │   │   ├── Gallery/           # Media management & storage analytics
+│   │   │   ├── Loader/            # Loading indicators & skeletons
+│   │   │   ├── Login/             # Authentication UI
+│   │   │   ├── MediaPreloader/    # Media optimization & preloading
+│   │   │   ├── Privacy/           # Privacy policy components
+│   │   │   ├── Profile/           # User profile management
+│   │   │   ├── Register/          # User registration forms
+│   │   │   ├── Routes/            # Route protection & navigation
+│   │   │   ├── Snackbar/          # Global notification system
+│   │   │   ├── Terms/             # Terms of service components
+│   │   │   └── Topbar/            # App header & user menu
+│   │   ├── 🔗 context/            # React Context (Auth state)
+│   │   └── 📋 constants.ts        # API endpoints & config
+│   └── 🏗️  build tools            # Vite, TypeScript, Material-UI
+└── 🎬 gifs/                       # Demo & documentation media
 ```
 
 ## 🛠️ Technology Stack
@@ -84,7 +115,42 @@ NetDrive/
 - **Process Management:** PM2 for zero-downtime deployments
 - **Security:** CSP headers, HTTPS redirects, secure cookies
 
-## 🚀 Quick Start
+## � User Roles & Permissions
+
+NetDrive implements a comprehensive role-based access control system with three distinct user levels:
+
+### 🔴 **Administrator (ROLE_ADMIN)**
+**Full System Control** - Complete access to all functionality
+- ✅ **User Management:** Create users, reset passwords, manage roles
+- ✅ **Core File Operations:** Upload, download, organize, delete files
+- ✅ **Advanced Features:** Storage analytics, soft/hard delete, favorites
+- ✅ **System Access:** All API endpoints and admin-only features
+- ✅ **Security:** Access to encrypted file storage and audit logs
+
+### 🟡 **Moderator (ROLE_MODERATOR)** 
+**Support & Moderation** - Enhanced user with future ticketing system support
+- ✅ **Core File Operations:** Upload, download, organize, delete files  
+- ✅ **Advanced Features:** Storage analytics, soft/hard delete, favorites
+- 🔄 **Future: Ticketing System** — Handle user support requests and bug reports
+- 🔄 **Future: Content Moderation** — Review and manage user content
+- ❌ **Restrictions:** Cannot create users or reset passwords
+
+### 🟢 **User (ROLE_USER)**
+**Standard Access** - Core file management functionality
+- ✅ **File Operations:** Upload (10MB limit), download, organize files
+- ✅ **Organization:** Create folders, mark favorites, manage trash
+- ✅ **Storage Management:** View storage usage with interactive charts
+- ✅ **File Lifecycle:** Soft delete (move to trash) and permanent deletion
+- ✅ **Security:** Personal encrypted storage with secure access
+- ❌ **Restrictions:** Cannot access admin features or manage other users
+
+### 🔐 **Role Assignment**
+- **Default:** New users receive `ROLE_USER` permissions
+- **Admin Creation:** Only administrators can create users and assign roles
+- **Security:** Role checks enforced at middleware level with JWT authentication
+- **Scalable:** Role system ready for future permission expansions
+
+## �🚀 Quick Start
 
 ### 📋 Prerequisites
 - Node.js >= 18.0.0

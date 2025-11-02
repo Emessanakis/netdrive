@@ -1,8 +1,8 @@
 // backend/controllers/files/downloadFile.controller.js
 import fs from "fs";
 import path from "path";
-import db from "../../models/index.js";
-import { decryptFileBuffer } from "../../utils/gcmEncryption.js";
+import db from "../../../models/index.js";
+import { decryptFileBuffer } from "../../../utils/gcmEncryption.js";
 
 const { file: FileModel, folder: FolderModel } = db;
 const uploadBaseDir = path.join(process.cwd(), "uploads");

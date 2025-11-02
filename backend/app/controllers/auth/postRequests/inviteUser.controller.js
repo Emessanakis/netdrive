@@ -1,6 +1,6 @@
-import db from "../../models/index.js";
+import db from "../../../models/index.js";
 import crypto from "crypto";
-import sendInvitationEmail from "../../services/email.service.js"; 
+import sendInvitationEmail from "../../../services/email.service.js"; 
 
 const { user: User, role: Role, plan: Plan } = db;
 

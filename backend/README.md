@@ -38,45 +38,92 @@ backend/
 ├── package.json                 # Dependencies and scripts
 ├── .env                        # Environment variables (not in VCS)
 ├── ca-certificate.crt          # SSL certificate
-├── uploads/                    # File storage directory
+├── uploads/                    # Encrypted file storage directory
 └── app/
     ├── config/                 # Application configuration
-    │   ├── auth.config.js      # JWT and auth settings
-    │   ├── db.config.js        # Database connection config
+    │   ├── auth.config.js      # JWT and authentication settings
+    │   ├── db.config.js        # Database connection configuration
     │   └── initializers/
-    │       └── dbInit.js       # Database initialization
-    ├── controllers/            # Business logic handlers
-    │   ├── auth/              # Authentication controllers
-    │   │   ├── changePassword.controller.js
-    │   │   ├── uploadFile.controller.js
-    │   │   ├── downloadFile.controller.js
-    │   │   ├── inviteUser.controller.js
-    │   │   └── [other auth controllers]
-    │   └── user/              # User management controllers
+    │       └── dbInit.js       # Database initialization & seeding
+    ├── controllers/            # HTTP method organized controllers
+    │   ├── auth/              # Authentication & user management
+    │   │   ├── getRequests/   # GET endpoints
+    │   │   │   ├── downloadFile.controller.js      # File download & streaming
+    │   │   │   ├── downloadThumbnail.controller.js # Thumbnail generation & download
+    │   │   │   ├── downloadThumbnailById.controller.js # Thumbnail by file ID
+    │   │   │   ├── getCurrentUser.controller.js    # User profile data
+    │   │   │   ├── getFavoriteFiles.controller.js  # User's favorite files
+    │   │   │   ├── getFile.controller.js           # Single file metadata
+    │   │   │   ├── getFiles.controller.js          # File listing & pagination
+    │   │   │   ├── getIsDeleted.js                 # Soft-deleted files (trash)
+    │   │   │   ├── getPlans.controller.js          # Available subscription plans
+    │   │   │   ├── getRoles.controller.js          # User role definitions
+    │   │   │   ├── getStorageStats.controller.js   # Storage usage analytics
+    │   │   │   ├── googleCredential.controller.js  # Google OAuth credentials
+    │   │   │   ├── googleSignin.controller.js      # Google authentication
+    │   │   │   └── mailOauth.controller.js         # Email OAuth integration
+    │   │   ├── postRequests/  # POST endpoints  
+    │   │   │   ├── inviteUser.controller.js        # Admin user invitations
+    │   │   │   ├── setMultipleFavorites.controller.js # Batch favorite operations
+    │   │   │   ├── signin.controller.js            # User authentication
+    │   │   │   ├── signout.controller.js           # Session termination
+    │   │   │   ├── signup.controller.js            # User registration
+    │   │   │   ├── softDelete.controller.js        # Move files to trash (batch)
+    │   │   │   └── upload.controller.js            # File upload & processing
+    │   │   ├── putRequests/   # PUT endpoints
+    │   │   │   ├── changePassword.controller.js    # User password updates
+    │   │   │   ├── restoreFile.controller.js       # Restore files from trash
+    │   │   │   └── toggleFavorite.controller.js    # Toggle file favorite status
+    │   │   ├── deleteRequests/ # DELETE endpoints
+    │   │   │   ├── permanentDelete.controller.js   # Permanent file deletion (single/batch)
+    │   │   │   └── softDeleteFile.controller.js    # Move single file to trash
+    │   │   └── index.js       # Controller exports
+    │   └── user/              # User access & role management controllers
     ├── middleware/            # Request processing middleware
-    │   ├── authJwt.js        # JWT authentication
-    │   ├── upload.middleware.js # File upload handling
-    │   └── validate.js       # Request validation
-    ├── models/               # Database models (Sequelize)
-    │   ├── user.model.js     # User accounts and profiles
-    │   ├── files.model.js    # File metadata and storage
-    │   ├── folder.model.js   # Folder organization
-    │   ├── thumbnail.model.js # Image/video thumbnails
-    │   ├── auditLog.model.js # Security and activity logs
-    │   └── [other models]
+    │   ├── authJwt.js        # JWT authentication & role verification
+    │   ├── upload.middleware.js # Multer file upload handling
+    │   ├── validate.js       # Request validation middleware
+    │   └── index.js          # Middleware exports
+    ├── models/               # Database models (Sequelize ORM)
+    │   ├── associations.js   # 🆕 Centralized model relationships
+    │   ├── auditLog.model.js # System activity logging
+    │   ├── files.model.js    # File metadata & storage references
+    │   ├── fileShare.model.js # File sharing permissions
+    │   ├── folder.model.js   # Folder organization & structure
+    │   ├── group.model.js    # User group management
+    │   ├── groupMembership.model.js # Group membership relations
+    │   ├── index.js          # Model initialization & exports
+    │   ├── plan.model.js     # Subscription plans & storage limits
+    │   ├── role.model.js     # Role-based access control
+    │   ├── subscription.model.js # User subscription tracking
+    │   ├── thumbnail.model.js # Generated thumbnail references
+    │   ├── user.model.js     # User accounts and authentication
+    │   └── README.md         # Model documentation & relationships
     ├── routes/               # API route definitions
-    │   ├── auth.routes.js    # Authentication endpoints
-    │   └── user.routes.js    # User management endpoints
+    │   └── auth.routes.js    # Authentication & file management routes
     ├── services/             # External service integrations
-    │   ├── email.service.js  # Email sending service
-    │   └── emailjs.service.js # Alternative email service
-    ├── utils/                # Helper functions
-    │   ├── crypto.js         # Encryption utilities
-    │   ├── gcmEncryption.js  # GCM encryption implementation
-    │   ├── nodemailer.js     # Email configuration
-    │   └── passwordGenerator.js # Secure password generation
+    │   ├── email.service.js  # Email delivery service
+    │   ├── emailjs.service.js # EmailJS integration
+    │   └── emailService.js   # Email template & sending
+    ├── testing/              # Test utilities & scripts
+    │   └── testEmail.mjs     # Email service testing
+    ├── utils/                # Utility functions & helpers
+    │   ├── crypto.js         # Cryptographic utilities
+    │   ├── folderInit.js     # Folder structure initialization
+    │   ├── gcmEncryption.js  # AES-GCM encryption implementation
+    │   ├── milencryption.js  # File encryption utilities
+    │   ├── nodemailer.js     # Email transport configuration
+    │   ├── passwordGenerator.js # Secure password generation
+    │   ├── prepareUserResponse.js # User data sanitization
+    │   ├── transporter.js    # Email transport setup
+    │   └── verifyUserHtml.js # Email verification templates
     └── validators/           # Input validation schemas
-        └── auth/             # Authentication validators
+        └── auth/             # Authentication validation
+            ├── changePassword.validator.js # Password change validation
+            ├── index.js      # Validator exports
+            ├── invite.validator.js # User invitation validation
+            ├── signin.validator.js # Login validation
+            └── signup.validator.js # Registration validation
 ```
 
 ## Database Schema (ER Diagram)
@@ -371,6 +418,59 @@ npm run dev
 # Run tests (if configured)
 npm test
 ```
+
+## 👥 Role-Based Access Control
+
+### Overview
+NetDrive implements a comprehensive role-based permission system with three distinct user levels, enforced through JWT middleware and database associations.
+
+### User Roles
+
+#### 🔴 **Administrator (ROLE_ADMIN)**
+- **User Management:** Create users (`POST /api/admin/users/invite`), reset passwords, manage roles
+- **Full File Access:** All file operations, admin-only endpoints
+- **System Control:** Access to all API endpoints and administrative features
+- **Security Access:** Audit logs, system configuration, user activity monitoring
+
+#### 🟡 **Moderator (ROLE_MODERATOR)**
+- **Standard File Operations:** Upload, download, organize, delete files
+- **Enhanced Features:** Storage analytics, soft/hard delete, favorites
+- **Future Capabilities:** Ticketing system support, content moderation
+- **Restrictions:** Cannot create users or access admin-only endpoints
+
+#### 🟢 **User (ROLE_USER)**
+- **Core Features:** File upload (10MB limit), download, organization
+- **File Management:** Folders, favorites, trash, storage charts
+- **Personal Security:** Encrypted personal storage, secure file access
+- **Restrictions:** No admin features, cannot manage other users
+
+### Role Enforcement
+
+#### Middleware Protection
+```javascript
+// Admin-only routes
+router.post("/api/admin/users/invite", [verifyToken, isAdmin], inviteUser);
+
+// General authenticated routes  
+router.get("/api/auth/getfiles", [verifyToken, getUserById], getFiles);
+
+// Role verification in authJwt.js
+const isAdmin = async (req, res, next) => {
+  const user = await User.findByPk(req.userId);
+  const roles = await user.getRoles();
+  
+  if (roles.some(role => role.name === "admin")) {
+    next(); // Allow access
+  } else {
+    return res.status(403).send({ message: "Require Admin Role!" });
+  }
+};
+```
+
+#### Database Schema
+- **User ↔ Role:** Many-to-Many relationship through `user_roles` junction table
+- **Role Assignment:** Default `ROLE_USER`, admin-assigned upgrades
+- **Security:** Role checks enforced at API middleware level with comprehensive error handling
 
 ## API Endpoints
 

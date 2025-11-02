@@ -3,6 +3,8 @@ import db from "../../../models/index.js";
 /**
  * Calculates detailed storage usage statistics for the authenticated user.
  * Uses raw SQL queries to avoid ambiguous column references.
+ * NOTE: Storage calculations include BOTH active and deleted files since 
+ * deleted files still consume storage until permanently removed.
  */
 const getStorageStats = async (req, res) => {
   const userId = req.userId;
@@ -33,13 +35,12 @@ const getStorageStats = async (req, res) => {
     const storageLimitBytes = Number(userPlanResult.storage_limit_bytes);
     const planName = userPlanResult.plan_name;
 
-    // 2. Get TOTAL size including files + thumbnails
+    // 2. Get TOTAL size including files + thumbnails (including deleted files since they consume storage)
     const totalSizeResult = await db.sequelize.query(
       `SELECT SUM(files.size_bytes + COALESCE(thumbnails.size_bytes, 0)) AS total_size
        FROM files
        LEFT JOIN thumbnails ON thumbnails.file_id = files.id
        WHERE files.is_hidden = FALSE
-         AND files.is_deleted = FALSE
          AND files."ownerId" = $1`,
       {
         bind: [userId],
@@ -48,12 +49,11 @@ const getStorageStats = async (req, res) => {
       }
     );
 
-    // 3. Get TOTAL file size only (excluding thumbnails)
+    // 3. Get TOTAL file size only (excluding thumbnails, including deleted files)
     const filesOnlySizeResult = await db.sequelize.query(
       `SELECT SUM(files.size_bytes) AS files_size
        FROM files
        WHERE files.is_hidden = FALSE
-         AND files.is_deleted = FALSE
          AND files."ownerId" = $1`,
       {
         bind: [userId],
@@ -62,13 +62,12 @@ const getStorageStats = async (req, res) => {
       }
     );
 
-    // 4. Get thumbnail-only total size
+    // 4. Get thumbnail-only total size (including for deleted files)
     const thumbnailsOnlySizeResult = await db.sequelize.query(
       `SELECT SUM(thumbnails.size_bytes) AS thumbnails_size
        FROM thumbnails
        INNER JOIN files ON thumbnails.file_id = files.id
        WHERE files.is_hidden = FALSE
-         AND files.is_deleted = FALSE
          AND thumbnails."ownerId" = $1`,
       {
         bind: [userId],
@@ -77,13 +76,12 @@ const getStorageStats = async (req, res) => {
       }
     );
 
-    // 5. Get size and count for IMAGES
+    // 5. Get size and count for IMAGES (including deleted files)
     const imagesSizeResult = await db.sequelize.query(
       `SELECT SUM(files.size_bytes + COALESCE(thumbnails.size_bytes, 0)) AS category_size
        FROM files
        LEFT JOIN thumbnails ON thumbnails.file_id = files.id
        WHERE files.is_hidden = FALSE
-         AND files.is_deleted = FALSE
          AND files."ownerId" = $1
          AND files.file_type = 'image'`,
       {
@@ -97,7 +95,6 @@ const getStorageStats = async (req, res) => {
       `SELECT COUNT(files.id) AS file_count
        FROM files
        WHERE files.is_hidden = FALSE
-         AND files.is_deleted = FALSE
          AND files."ownerId" = $1
          AND files.file_type = 'image'`,
       {
@@ -107,13 +104,12 @@ const getStorageStats = async (req, res) => {
       }
     );
 
-    // 6. Get size and count for VIDEOS
+    // 6. Get size and count for VIDEOS (including deleted files)
     const videosSizeResult = await db.sequelize.query(
       `SELECT SUM(files.size_bytes + COALESCE(thumbnails.size_bytes, 0)) AS category_size
        FROM files
        LEFT JOIN thumbnails ON thumbnails.file_id = files.id
        WHERE files.is_hidden = FALSE
-         AND files.is_deleted = FALSE
          AND files."ownerId" = $1
          AND files.file_type = 'video'`,
       {
@@ -127,7 +123,6 @@ const getStorageStats = async (req, res) => {
       `SELECT COUNT(files.id) AS file_count
        FROM files
        WHERE files.is_hidden = FALSE
-         AND files.is_deleted = FALSE
          AND files."ownerId" = $1
          AND files.file_type = 'video'`,
       {
@@ -137,13 +132,12 @@ const getStorageStats = async (req, res) => {
       }
     );
 
-    // 7. Get size and count for DOCUMENTS
+    // 7. Get size and count for DOCUMENTS (including deleted files)
     const documentsSizeResult = await db.sequelize.query(
       `SELECT SUM(files.size_bytes + COALESCE(thumbnails.size_bytes, 0)) AS category_size
        FROM files
        LEFT JOIN thumbnails ON thumbnails.file_id = files.id
        WHERE files.is_hidden = FALSE
-         AND files.is_deleted = FALSE
          AND files."ownerId" = $1
          AND files.file_type = 'document'`,
       {
@@ -157,7 +151,6 @@ const getStorageStats = async (req, res) => {
       `SELECT COUNT(files.id) AS file_count
        FROM files
        WHERE files.is_hidden = FALSE
-         AND files.is_deleted = FALSE
          AND files."ownerId" = $1
          AND files.file_type = 'document'`,
       {
@@ -167,13 +160,12 @@ const getStorageStats = async (req, res) => {
       }
     );
 
-    // 8. Get size and count for OTHERS
+    // 8. Get size and count for OTHERS (including deleted files)
     const othersSizeResult = await db.sequelize.query(
       `SELECT SUM(files.size_bytes + COALESCE(thumbnails.size_bytes, 0)) AS category_size
        FROM files
        LEFT JOIN thumbnails ON thumbnails.file_id = files.id
        WHERE files.is_hidden = FALSE
-         AND files.is_deleted = FALSE
          AND files."ownerId" = $1
          AND files.file_type = 'other'`,
       {
@@ -187,7 +179,6 @@ const getStorageStats = async (req, res) => {
       `SELECT COUNT(files.id) AS file_count
        FROM files
        WHERE files.is_hidden = FALSE
-         AND files.is_deleted = FALSE
          AND files."ownerId" = $1
          AND files.file_type = 'other'`,
       {
