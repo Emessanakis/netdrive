@@ -54,8 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             picture: u.picture,
             planId: u.plan?.id ?? null,
             planName: u.plan?.name ?? null,
-            storageLimitBytes:
-              u.plan?.storage_limit_bytes ?? u.storageLimitBytes ?? 0,
+            storageLimitBytes: u.plan?.storage_limit_bytes ?? u.storageLimitBytes ?? 0,
             status: u.status ?? true,
           });
         } else {

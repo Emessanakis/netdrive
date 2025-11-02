@@ -128,14 +128,14 @@ const StorageDonutChart: React.FC<StorageDonutChartProps> = ({
               <Box sx={{ width: 16, height: 16, borderRadius: '50%', backgroundColor: category.color, border: `2px solid white`, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
               <Typography variant="body1" color="text.primary" fontSize="1rem" fontWeight="500" sx={{ textTransform: 'capitalize', whiteSpace: 'nowrap' }}>{category.name}</Typography>
             </Box>
-            <Typography variant="body1" color="text.secondary" fontWeight="bold" fontSize="1rem" sx={{ whiteSpace: 'nowrap' }}>{formatBytes(category.value)}</Typography>
+            <Typography variant="body1" color="text.secondary" fontWeight="bold" fontSize="1rem" sx={{ whiteSpace: 'nowrap', marginLeft: '15px' }}>{formatBytes(category.value)}</Typography>
           </Box>
         ))}
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '10px' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
             <Box sx={{ width: 16, height: 16, borderRadius: '50%', backgroundColor: colors.freeSpace, border: `2px solid white`, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
-            <Typography variant="body1" color="text.primary" fontSize="1rem" fontWeight="500">Free</Typography>
+            <Typography variant="body1" color="text.primary" fontSize="1rem" fontWeight="500" minWidth={'px'}>Free</Typography>
           </Box>
           <Typography variant="body1" color="text.secondary" fontWeight="bold" fontSize="1rem">{formatBytes(data.freeSpace)}</Typography>
         </Box>

@@ -29,33 +29,106 @@ NetDrive Frontend is a production-deployed Single Page Application (SPA) that of
 ## Folder Structure
 
 ```
-src/
-├── components/           # Reusable UI components
-│   ├── CreateUser/      # User creation forms
-│   ├── Dashboard/       # Main dashboard layout
-│   │   ├── Content.tsx  # Main content area
-│   │   ├── Dashboard.tsx # Dashboard container
-│   │   └── Sidebar.tsx  # Navigation sidebar
-│   ├── Gallery/         # Media gallery components
-│   │   ├── components/  # Gallery-specific components
-│   │   ├── hooks/       # Gallery custom hooks
-│   │   ├── utils/       # Gallery utilities
-│   │   ├── FavoritesMedia.tsx
-│   │   ├── GalleryMedia.tsx
-│   │   ├── GalleryUpload.tsx
-│   │   ├── StorageDonutChart.tsx
-│   │   └── TrashMedia.tsx
-│   ├── Login/           # Authentication components
-│   ├── Profile/         # User profile management
-│   ├── Register/        # User registration
+frontend/
+├── src/
+│   ├── components/           # React component library
+│   │   ├── CreateUser/       # Admin user creation interface
+│   │   │   └── CreateUser.tsx
+│   │   ├── Dashboard/        # Main application layout
+│   │   │   ├── Content.tsx   # Dynamic content area
+│   │   │   ├── Dashboard.tsx # Layout container
+│   │   │   └── Sidebar.tsx   # Navigation & role-based menu
+│   │   ├── Gallery/          # Media management system
+│   │   │   ├── components/   # Gallery subcomponents
+│   │   │   │   ├── DialogControls/     # Dialog management & state
+│   │   │   │   ├── MediaCard/          # File display cards & actions
+│   │   │   │   ├── MediaDialog/        # Full-screen media preview
+│   │   │   │   ├── MediaGrid/          # Responsive grid layout & virtualization
+│   │   │   │   └── SkeletonLoader/     # Loading states & placeholders
+│   │   │   ├── hooks/        # Custom React hooks for media management
+│   │   │   │   ├── index.ts            # Hook exports
+│   │   │   │   ├── types.ts            # TypeScript interfaces & types
+│   │   │   │   ├── useFavoritesFetch.ts # Favorites data fetching
+│   │   │   │   ├── useMediaActions.ts   # File operations (delete, restore, etc.)
+│   │   │   │   ├── useMediaFetch.ts     # Gallery data fetching
+│   │   │   │   ├── useMediaStore.ts     # Global media state management
+│   │   │   │   └── useTrashFetch.ts     # Trash/deleted files fetching
+│   │   │   ├── utils/        # Gallery utilities & constants
+│   │   │   │   └── galleryConstants.ts  # API endpoints & config
+│   │   │   ├── FavoritesMedia.tsx       # Favorites management view
+│   │   │   ├── GalleryMedia.tsx         # Main gallery view & upload
+│   │   │   ├── GalleryUpload.tsx        # File upload interface & storage chart
+│   │   │   ├── StorageDonutChart.tsx    # 🆕 Storage usage visualization
+│   │   │   ├── StorageDonutChartSkeleton.tsx # 🆕 Storage chart loading skeleton
+│   │   │   ├── TrashMedia.tsx           # Deleted files management
+│   │   │   └── index.ts                 # Gallery component exports
+│   │   ├── Loader/           # Global loading components
+│   │   ├── Login/            # Authentication interface
+│   │   ├── MediaPreloader/   # Media loading optimization
+│   │   ├── Privacy/          # Privacy policy pages
+│   │   ├── Profile/          # User profile management
+│   │   ├── Register/         # User registration forms
+│   │   ├── Routes/           # Route protection & navigation
+│   │   ├── Snackbar/         # Global notification system
+│   │   ├── Terms/            # Terms of service pages
+│   │   └── Topbar/           # App header & user menu
 │   ├── Routes/          # Route configuration
 │   └── Topbar/         # Navigation header
-├── context/            # React context providers
-│   └── AuthContext.tsx # Authentication state management
-├── assets/            # Static assets (images, icons)
-├── constants.ts       # API endpoints and app constants
-└── main.tsx          # Application entry point
+│   ├── context/              # React context providers
+│   │   └── AuthContext.tsx   # Authentication & role state management
+│   ├── assets/               # Static assets (images, icons)
+│   ├── constants.ts          # API endpoints and app constants
+│   └── main.tsx             # Application entry point
+├── public/                   # Static public assets
+└── build configuration       # Vite, TypeScript, ESLint configs
 ```
+
+## 👥 Role-Based UI Features
+
+### Role-Responsive Interface
+The frontend dynamically adapts based on user roles, providing appropriate access and functionality:
+
+#### 🔴 **Admin Interface (ROLE_ADMIN)**
+- ✅ **User Management:** Access to CreateUser component for inviting new users
+- ✅ **Full Gallery:** All file operations with administrative controls
+- ✅ **Sidebar Menu:** Complete navigation including admin-only options
+- ✅ **Storage Analytics:** Comprehensive storage and user statistics
+- ✅ **System Controls:** Access to all application features
+
+#### 🟡 **Moderator Interface (ROLE_MODERATOR)**
+- ✅ **Enhanced Gallery:** Full file management with advanced features
+- ✅ **Storage Tools:** Analytics and organization capabilities  
+- 🔄 **Future: Support Dashboard** — Ticketing system interface (planned)
+- ❌ **Restrictions:** No user creation or admin-specific controls
+
+#### 🟢 **User Interface (ROLE_USER)**
+- ✅ **Core Gallery:** Upload, organize, favorites, trash management
+- ✅ **Storage Charts:** Personal storage usage visualization
+- ✅ **File Operations:** Complete file lifecycle management
+- ❌ **Restrictions:** No admin features or user management access
+
+### Role-Based Components
+
+#### **Sidebar Navigation (Sidebar.tsx)**
+```typescript
+// Role-based menu rendering
+{user?.role === 'ROLE_ADMIN' && (
+  <ListItem onClick={() => navigate('/create-user')}>
+    <ListItemIcon><PersonAdd /></ListItemIcon>
+    <ListItemText primary="Create User" />
+  </ListItem>
+)}
+```
+
+#### **CreateUser Component**
+- **Protection:** Admin-only access with role verification
+- **Security:** Client-side and server-side permission checks
+- **Features:** User invitation, role assignment, plan selection
+
+#### **Storage Analytics**
+- **Personal View:** Individual storage usage for all roles
+- **Admin Insights:** System-wide storage analytics (admin-only)
+- **Interactive Charts:** Real-time donut charts with skeleton loading
 
 ## Key Files & Responsibilities
 

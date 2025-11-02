@@ -158,6 +158,13 @@ export const useMediaActions = ({
       // Remove from cache
       mediaStore.removeFileFromCache(fileId);
       
+      // Dispatch storage change event to update storage charts
+      try {
+        window.dispatchEvent(new CustomEvent('storageChanged'));
+      } catch (err) {
+        // Ignore if event dispatching fails
+      }
+      
       onSuccess?.(); 
       showDialog?.('Permanent Deletion Succeeded', 'File permanently deleted.');
       

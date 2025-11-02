@@ -4,6 +4,7 @@ import UploadIcon from '@mui/icons-material/Upload';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useDropzone } from 'react-dropzone';
 import StorageDonutChart from './StorageDonutChart';
+import StorageDonutChartSkeleton from './StorageDonutChartSkeleton';
 import { useMediaStore } from './hooks/useMediaStore';
 import { useSnackbar } from '../Snackbar/SnackbarProvider';
 import { API_ENDPOINTS } from '../../constants';
@@ -19,6 +20,7 @@ const GalleryUpload: React.FC<GalleryUploadProps> = ({ onUploadSuccess }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [storageData, setStorageData] = useState({ images: 0, videos: 0, freeSpace: 0, totalSpace: 0 });
+  const [isStorageDataLoaded, setIsStorageDataLoaded] = useState(false);
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
   const { showSnackbar } = useSnackbar();
 
@@ -35,13 +37,27 @@ const GalleryUpload: React.FC<GalleryUploadProps> = ({ onUploadSuccess }) => {
           freeSpace: stats.remainingSpaceBytes ?? 0,
           totalSpace: stats.storageLimitBytes ?? 0,
         });
+        setIsStorageDataLoaded(true);
       }
     } catch (err) {
-      // ignore for now
+      // Set loaded even on error to prevent infinite loading
+      setIsStorageDataLoaded(true);
     }
   }, [API_URL]);
 
   useEffect(() => { fetchStorageStats(); }, [fetchStorageStats]);
+
+  // Listen for storage change events from permanent deletions
+  useEffect(() => {
+    const handleStorageChange = () => {
+      fetchStorageStats();
+    };
+
+    window.addEventListener('storageChanged', handleStorageChange);
+    return () => {
+      window.removeEventListener('storageChanged', handleStorageChange);
+    };
+  }, [fetchStorageStats]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setHelperMessage(null);
@@ -107,9 +123,6 @@ const GalleryUpload: React.FC<GalleryUploadProps> = ({ onUploadSuccess }) => {
     setIsUploading(true);
     setProgress(0);
 
-    // Create local preview URLs for queued files so we can show optimistic thumbnails
-    const previewUrls = files.map(f => URL.createObjectURL(f));
-
     const form = new FormData();
     files.forEach(f => form.append('files', f));
 
@@ -161,7 +174,7 @@ const GalleryUpload: React.FC<GalleryUploadProps> = ({ onUploadSuccess }) => {
         };
 
   const normalizedRaw = Array.isArray(payload) ? payload : [payload];
-          const normalized = normalizedRaw.map((item: any, i: number) => {
+          const normalized = normalizedRaw.map((item: any) => {
           const n = normalize(item);
           // Ensure we have an id (generate temporary id if backend didn't provide one)
           const hadId = !!n.id;
@@ -171,40 +184,28 @@ const GalleryUpload: React.FC<GalleryUploadProps> = ({ onUploadSuccess }) => {
           if (!n.name && item.original_filename) n.name = item.original_filename;
           if (!n.uploadedAt && (item.uploaded_at || item.uploadedAt)) n.uploadedAt = item.uploaded_at || item.uploadedAt;
 
-          // Prefer local preview URL when available (shows immediately and avoids CSP issues)
-          const preview = previewUrls[i];
           // Compute a canonical remote thumbnail candidate (may be undefined).
           // Prefer the dedicated download-thumbnail endpoint whenever we
           // have a server id. Some backends set `item.url` to the raw file
           // (mp4), which causes clients to fetch the full video. Using the
           // thumbnail endpoint reduces bandwidth and yields PNG/JPEG when
           // available.
-          // Some backends return a legacy `/api/auth/thumbnail/:id` URL. Normalize
-          // those to the canonical download-thumbnail endpoint to avoid extra
-          // or incorrect requests from the client.
-          // Only construct a download-thumbnail candidate when the backend provided
-          // a real id (hadId). For optimistic/temp ids we should not point the
-          // client at a server thumbnail endpoint that won't exist yet.
-          let remoteCandidate = item.thumbnail_url || (hadId ? API_ENDPOINTS.DOWNLOAD_THUMBNAIL(n.id) : null) || item.url;
+          // Only use thumbnail URLs that the server explicitly provided
+          // For newly uploaded files, mark them as not ready for thumbnail loading yet
+          let remoteCandidate = item.thumbnail_url || null;
           try {
             if (typeof remoteCandidate === 'string' && /\/api\/auth\/thumbnail\//.test(remoteCandidate) && n.id) {
               remoteCandidate = API_ENDPOINTS.DOWNLOAD_THUMBNAIL(n.id);
             }
           } catch (e) {}
 
-          // Prefer the dedicated server-side thumbnail URL when possible so
-          // the client consistently requests the same canonical thumbnail.
-          // Fall back to the local preview only if we don't have a remote candidate.
+          // Only set thumbnail URL if server explicitly provided one
           if (remoteCandidate) {
             n.thumbnail_url = remoteCandidate;
-          } else if (preview) {
-            n.thumbnail_url = preview;
           }
 
-          // keep the canonical remote thumbnail separately so background fetch can try it
-          (n as any).__remoteThumbnail = remoteCandidate || null;
-
-          if (!n.url && preview) n.url = preview;
+          // Store the potential thumbnail endpoint for background fetch to try later
+          (n as any).__remoteThumbnail = hadId ? API_ENDPOINTS.DOWNLOAD_THUMBNAIL(n.id) : null;
 
           // mark optimistic only when we generated a temp id (backend didn't supply a real id)
           (n as any).__optimistic = !hadId;
@@ -217,87 +218,27 @@ const GalleryUpload: React.FC<GalleryUploadProps> = ({ onUploadSuccess }) => {
         } catch (err) {
           // ignore
         }
-        // After optimistic insertion, query the canonical file record for each uploaded item
-        // so we can obtain authoritative thumbnail_id/thumbnail_url values. Then run the
-        // background fetch/convert-to-dataURL flow against those canonical URLs with retry.
-        (async () => {
-          // Helper: fetch the get-file endpoint for a single id and update cache
-          const fetchCanonical = async (item: any) => {
-            try {
-              // Only fetch for items that have a (likely) server id
-              if (!item.id || String(item.id).startsWith('temp-')) return null;
-              const resp = await fetch(API_ENDPOINTS.GET_FILE(item.id), { credentials: 'include' });
-              if (!resp.ok) return null;
-              const json = await resp.json();
-              if (!json || !json.file) return null;
-              const file = json.file;
-              // Update cache with canonical urls/thumbnail info
-              try {
-                mediaStore.updateFileInCache(item.id, {
-                  url: file.url || item.url,
-                  thumbnail_url: file.thumbnail_url || item.thumbnail_url || null,
-                } as any);
-              } catch (err) {}
-              // Return the canonical thumbnail candidate for further fetching
-              return file.thumbnail_url || null;
-            } catch (err) {
-              return null;
-            }
-          };
-
-          // Try to fetch canonical metadata for all uploaded items in parallel (limited to those with ids)
-          const canonicalResults = await Promise.all(normalized.map(async (item: any) => {
-            const remote = await fetchCanonical(item);
-            // store remote candidate on the item for later processing
-            (item as any).__remoteThumbnail = remote || ((item as any).__remoteThumbnail || null);
-            return item;
-          }));
-
-          // Update the cache using the canonical remote thumbnail URL when appropriate.
-          // To avoid duplicate network requests, do not preflight-request the thumbnail URL;
-          // instead, prefer the dedicated thumbnail endpoint or any URL that already looks
-          // like an image (data/blob or image extension). Otherwise fall back to the local preview.
-          try {
-            await Promise.allSettled(canonicalResults.map(async (item: any, idx: number) => {
-              const remote = (item as any).__remoteThumbnail || item.url || item.thumbnail_url;
-              if (!remote) return;
-
-              const isThumbnailEndpoint = typeof remote === 'string' && remote.includes('/download-thumbnail');
-              const isImageUrl = typeof remote === 'string' && (/\.(png|jpe?g|gif|webp)(\?|$)/i.test(remote) || remote.startsWith('data:') || remote.startsWith('blob:'));
-
-              try {
-                if (isThumbnailEndpoint || isImageUrl) {
-                  // Let the browser request and cache the image once; avoid prefetching here.
-                  try { mediaStore.updateFileInCache(item.id, { thumbnail_url: remote, url: remote } as any); } catch (err) {}
-                } else {
-                  try {
-                    if (previewUrls && previewUrls[idx]) {
-                      mediaStore.updateFileInCache(item.id, { thumbnail_url: previewUrls[idx], url: previewUrls[idx] } as any);
-                    }
-                  } catch (err) {}
-                }
-              } catch (err) {}
-            }));
-          } catch (err) {}
-        })();
         // Notify parent about the upload result after optimistic cache insertion
         // Parent (GalleryMedia) will show the overall success snackbar, so avoid
         // showing a duplicate success message here. Keep error messaging in this
         // component though.
         onUploadSuccess(normalized as any);
 
-        // Revoke preview URLs after a short delay (backend should supply real URLs on fetch)
-        setTimeout(() => {
-          previewUrls.forEach(url => {
-            try { URL.revokeObjectURL(url); } catch (err) { /* ignore */ }
-          });
-        }, 30_000);
+        // Let MediaCard handle thumbnail loading on its own - no background fetch needed
+
   // Trigger a single delayed fetch to reconcile with backend processing (avoid duplicate immediate fetches)
   setTimeout(() => { try { mediaStore.fetchMedia('gallery', 1, true); mediaStore.fetchMedia('favorites', 1, true); } catch (err) {} }, 2000);
       }
       setFiles([]);
       setProgress(100);
       await fetchStorageStats();
+      
+      // Dispatch storage change event for any other components that might need to update
+      try {
+        window.dispatchEvent(new CustomEvent('storageChanged'));
+      } catch (err) {
+        // Ignore if event dispatching fails
+      }
     } catch (err) {
       // Show a user-friendly message and set a helper note in the queue UI
       const messageText = err && (err as any).message ? String((err as any).message) : 'Upload failed. Please try again.';
@@ -399,7 +340,11 @@ const GalleryUpload: React.FC<GalleryUploadProps> = ({ onUploadSuccess }) => {
 
       <Card sx={{ flex: { xs: '1 1 100%', md: '1 1 48%' }, p: 3, boxShadow: 3, borderRadius: 2, bgcolor: 'background.paper', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Box sx={{ width: '100%' }}>
-          <StorageDonutChart data={{ images: storageData.images, videos: storageData.videos, freeSpace: storageData.freeSpace, totalSpace: storageData.totalSpace }} />
+          {isStorageDataLoaded ? (
+            <StorageDonutChart data={{ images: storageData.images, videos: storageData.videos, freeSpace: storageData.freeSpace, totalSpace: storageData.totalSpace }} />
+          ) : (
+            <StorageDonutChartSkeleton />
+          )}
         </Box>
       </Card>
     </Box>
